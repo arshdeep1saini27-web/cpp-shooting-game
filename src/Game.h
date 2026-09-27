@@ -51,6 +51,7 @@ public:
     void draw(sf::RenderWindow& window) const;
     void fire(std::vector<Bullet>& bullets, const sf::Vector2f& aimDir);
     void setWeapon(int weaponId);
+    void setRecoil(float kick); 
 
     sf::Vector2f position{200.f, 200.f};
     float speed = 320.f;
@@ -59,6 +60,7 @@ public:
     float bulletSpeed = 900.f;
     float bulletDamage = 25.f;
     float fireRate = 0.18f;
+    float recoil = 0.f;
     bool scoped = false;
     int currentWeapon = 0;
 

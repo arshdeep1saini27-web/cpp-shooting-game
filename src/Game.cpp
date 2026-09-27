@@ -64,15 +64,22 @@ void Player::setWeapon(int weaponId) {
         fireRate = 0.12f;
         bulletSpeed = 1250.f;
         bulletDamage = 35.f;
+        recoil = 0.10f;
     } else if (weaponId == 1) {
         fireRate = 0.18f;
         bulletSpeed = 1400.f;
         bulletDamage = 28.f;
+        recoil = 0.08f;
     } else if (weaponId == 2) {
         fireRate = 0.06f;
         bulletSpeed = 1150.f;
         bulletDamage = 50.f;
+        recoil = 0.14f;
     }
+}
+
+void Player::setRecoil(float kick) {
+    recoil = kick;
 }
 
 void Player::update(float dt, const sf::Vector2u& windowSize, const sf::RenderWindow& window, const ModManager& modManager) {
@@ -117,6 +124,9 @@ void Player::update(float dt, const sf::Vector2u& windowSize, const sf::RenderWi
     if (fireCooldown > 0.f) {
         fireCooldown -= dt;
     }
+    if (recoil > 0.f) {
+        recoil = std::max(0.f, recoil - dt * 2.f);
+    }
 }
 
 void Player::draw(sf::RenderWindow& window) const {
@@ -131,6 +141,7 @@ void Player::fire(std::vector<Bullet>& bullets, const sf::Vector2f& aimDir) {
     const sf::Vector2f firingPos = position + normalize(aimDir) * 28.f;
     bullets.emplace_back(firingPos, normalize(aimDir) * bulletSpeed, static_cast<int>(bulletDamage), true);
     fireCooldown = fireRate;
+    recoil = std::max(recoil, 0.12f);
 }
 
 Game::Game()
@@ -414,9 +425,9 @@ void Game::renderMenu() {
     title.setFillColor(sf::Color(255, 215, 120));
     title.setPosition(350.f, 140.f);
 
-    sf::Text subtitle("WEAPON SWITCH MODE", font_, 26);
+    sf::Text subtitle("RECOIL SYSTEM", font_, 26);
     subtitle.setFillColor(sf::Color(180, 180, 180));
-    subtitle.setPosition(420.f, 220.f);
+    subtitle.setPosition(450.f, 220.f);
 
     window_.draw(title);
     window_.draw(subtitle);
