@@ -1,0 +1,54 @@
+#include "AudioManager.h"
+
+namespace {
+float clamp01(float value) {
+    return std::max(0.f, std::min(1.f, value));
+}
+}
+
+sf::SoundBuffer AudioManager::generateTone(float frequency, float durationSeconds, float volume, int sampleRate) {
+    std::vector<sf::Int16> samples(static_cast<size_t>(sampleRate * durationSeconds));
+    const float amplitude = 12000.f * volume;
+
+    for (size_t i = 0; i < samples.size(); ++i) {
+        const float time = static_cast<float>(i) / static_cast<float>(sampleRate);
+        const float envelope = std::exp(-5.f * time);
+        const float wave = std::sin(2.f * 3.14159265f * frequency * time);
+        const float noise = (std::sin(2.f * 3.14159265f * 113.0f * time) * 0.25f);
+        const float sample = (wave + noise) * amplitude * envelope;
+        samples[i] = static_cast<sf::Int16>(sample);
+    }
+
+    sf::SoundBuffer buffer;
+    buffer.loadFromSamples(samples.data(), static_cast<unsigned int>(samples.size()), 1, sampleRate);
+    return buffer;
+}
+
+AudioManager::AudioManager() {
+    shootBuffer_ = generateTone(180.f, 0.08f, 0.9f);
+    hitBuffer_ = generateTone(90.f, 0.14f, 0.7f);
+    impactBuffer_ = generateTone(40.f, 0.16f, 0.8f);
+    musicBuffer_ = generateTone(110.f, 1.5f, 0.3f);
+
+    shootSound_.setBuffer(shootBuffer_);
+    hitSound_.setBuffer(hitBuffer_);
+    impactSound_.setBuffer(impactBuffer_);
+    music_.setBuffer(musicBuffer_);
+    music_.setLoop(true);
+}
+
+void AudioManager::playShoot() {
+    shootSound_.play();
+}
+
+void AudioManager::playHit() {
+    hitSound_.play();
+}
+
+void AudioManager::playImpact() {
+    impactSound_.play();
+}
+
+void AudioManager::playMusic() {
+    music_.play();
+}
