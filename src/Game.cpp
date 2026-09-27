@@ -58,6 +58,23 @@ Player::Player() {
     legs_.setPosition(position.x, position.y + 26.f);
 }
 
+void Player::setWeapon(int weaponId) {
+    currentWeapon = weaponId;
+    if (weaponId == 0) {
+        fireRate = 0.12f;
+        bulletSpeed = 1250.f;
+        bulletDamage = 35.f;
+    } else if (weaponId == 1) {
+        fireRate = 0.18f;
+        bulletSpeed = 1400.f;
+        bulletDamage = 28.f;
+    } else if (weaponId == 2) {
+        fireRate = 0.06f;
+        bulletSpeed = 1150.f;
+        bulletDamage = 50.f;
+    }
+}
+
 void Player::update(float dt, const sf::Vector2u& windowSize, const sf::RenderWindow& window, const ModManager& modManager) {
     speed = modManager.settings().playerSpeed;
     fireRate = modManager.settings().fireRate;
@@ -72,7 +89,7 @@ void Player::update(float dt, const sf::Vector2u& windowSize, const sf::RenderWi
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) || sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) moveX -= 1.f;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) || sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) moveX += 1.f;
 
-    const float sprintBoost = sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) ? 1.75f : 1.f;
+    const float sprintBoost = sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) ? 1.85f : 1.f;
 
     if (moveX != 0.f || moveY != 0.f) {
         auto direction = normalize({moveX, moveY});
@@ -121,6 +138,7 @@ Game::Game()
       modManager_(),
       audioManager_() {
     modManager_.loadFromFile("mods/default_mod.json");
+    player_.setWeapon(0);
     window_.setFramerateLimit(60);
     window_.setKeyRepeatEnabled(false);
 
@@ -145,16 +163,16 @@ Game::Game()
     titleText_.setPosition(20.f, 20.f);
 
     menuText_.setFont(font_);
-    menuText_.setCharacterSize(30);
+    menuText_.setCharacterSize(28);
     menuText_.setFillColor(sf::Color(240, 240, 240));
-    menuText_.setString("Press ENTER to start\nPress ESC to quit\nHold SHIFT to sprint");
-    menuText_.setPosition(360.f, 360.f);
+    menuText_.setString("Press ENTER to start\n1 = Rifle\n2 = SMG\n3 = Burst Gun\nESC to quit\nHold SHIFT to sprint");
+    menuText_.setPosition(360.f, 320.f);
 
     pauseText_.setFont(font_);
     pauseText_.setCharacterSize(28);
     pauseText_.setFillColor(sf::Color::White);
-    pauseText_.setString("PAUSED\nPress ENTER to resume\nESC to quit\nSHIFT = sprint");
-    pauseText_.setPosition(420.f, 290.f);
+    pauseText_.setString("PAUSED\nPress ENTER to resume\n1 / 2 / 3 = switch weapon\nESC to quit\nSHIFT = sprint");
+    pauseText_.setPosition(360.f, 260.f);
 }
 
 void Game::processEvents() {
@@ -188,6 +206,16 @@ void Game::processEvents() {
             } else if (state_ == GameState::Paused) {
                 state_ = GameState::Playing;
             }
+        }
+
+        if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Num1) {
+            player_.setWeapon(0);
+        }
+        if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Num2) {
+            player_.setWeapon(1);
+        }
+        if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Num3) {
+            player_.setWeapon(2);
         }
     }
 }
@@ -294,10 +322,10 @@ void Game::update(float dt) {
     }
 
     spawnTimer_ += dt;
-    if (spawnTimer_ > 1.1f) {
+    if (spawnTimer_ > 0.75f) {
         spawnEnemy();
         spawnTimer_ = 0.f;
-        difficulty_ += 0.12f;
+        difficulty_ += 0.15f;
     }
 
     for (auto& enemy : enemies_) {
@@ -315,9 +343,9 @@ void Game::update(float dt) {
             }
 
             if (distance < 420.f && enemy.fireCooldown <= 0.f) {
-                const sf::Vector2f bulletVelocity = dir * 650.f;
+                const sf::Vector2f bulletVelocity = dir * 700.f;
                 bullets_.emplace_back(enemy.position + bulletVelocity * 0.15f, bulletVelocity, static_cast<int>(modManager_.settings().enemyDamage), false);
-                enemy.fireCooldown = 0.75f;
+                enemy.fireCooldown = 0.55f;
                 audioManager_.playShoot();
             }
         }
@@ -330,6 +358,7 @@ void Game::update(float dt) {
 
     hudText_.setString("Health: " + std::to_string(static_cast<int>(player_.health)) +
         "  |  Score: " + std::to_string(score_) +
+        "  |  Weapon: " + std::string(player_.currentWeapon == 0 ? "Rifle" : player_.currentWeapon == 1 ? "SMG" : "Burst") +
         "  |  Scope: " + std::string(player_.scoped ? "OPEN" : "CLOSED") +
         "  |  Wave: " + std::to_string(static_cast<int>(difficulty_ * 10.f)) +
         "  |  Sprint: " + std::string(sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) ? "ON" : "OFF"));
@@ -385,9 +414,9 @@ void Game::renderMenu() {
     title.setFillColor(sf::Color(255, 215, 120));
     title.setPosition(350.f, 140.f);
 
-    sf::Text subtitle("FAST COMBAT MODE", font_, 26);
+    sf::Text subtitle("WEAPON SWITCH MODE", font_, 26);
     subtitle.setFillColor(sf::Color(180, 180, 180));
-    subtitle.setPosition(430.f, 220.f);
+    subtitle.setPosition(420.f, 220.f);
 
     window_.draw(title);
     window_.draw(subtitle);

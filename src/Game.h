@@ -47,9 +47,10 @@ struct Enemy {
 class Player {
 public:
     Player();
-    void update(float dt, const sf::Vector2u& windowSize, const ModManager& modManager);
+    void update(float dt, const sf::Vector2u& windowSize, const sf::RenderWindow& window, const ModManager& modManager);
     void draw(sf::RenderWindow& window) const;
     void fire(std::vector<Bullet>& bullets, const sf::Vector2f& aimDir);
+    void setWeapon(int weaponId);
 
     sf::Vector2f position{200.f, 200.f};
     float speed = 320.f;
@@ -59,12 +60,20 @@ public:
     float bulletDamage = 25.f;
     float fireRate = 0.18f;
     bool scoped = false;
+    int currentWeapon = 0;
 
 private:
     sf::RectangleShape torso_;
     sf::RectangleShape head_;
     sf::RectangleShape weapon_;
     sf::RectangleShape legs_;
+};
+
+enum class GameState {
+    Menu,
+    Playing,
+    Paused,
+    GameOver
 };
 
 class Game {
@@ -76,6 +85,10 @@ private:
     void processEvents();
     void update(float dt);
     void render();
+    void renderMenu();
+    void renderPauseOverlay();
+    void showMainMenu();
+    void showPauseMenu();
     void spawnEnemy();
     void handleBulletLifetime(float dt);
     void handleCombat();
@@ -88,6 +101,8 @@ private:
     sf::Text hudText_;
     sf::Text statusText_;
     sf::Text titleText_;
+    sf::Text menuText_;
+    sf::Text pauseText_;
 
     Player player_;
     std::vector<Enemy> enemies_;
@@ -96,6 +111,7 @@ private:
     LoadingScreen loadingScreen_;
     AudioManager audioManager_;
 
+    GameState state_ = GameState::Menu;
     float spawnTimer_ = 0.f;
     float difficulty_ = 1.f;
     int score_ = 0;
