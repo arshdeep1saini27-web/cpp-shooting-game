@@ -1,11 +1,29 @@
 #include "LoadingScreen.h"
 
-#include <algorithm>
 #include <string>
+#include <vector>
+
+namespace {
+bool loadLoadingFont(sf::Font& font) {
+    const std::vector<std::string> paths = {
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf",
+        "C:/Windows/Fonts/arialbd.ttf",
+        "C:/Windows/Fonts/consola.ttf"
+    };
+
+    for (const auto& path : paths) {
+        if (font.loadFromFile(path)) {
+            return true;
+        }
+    }
+    return false;
+}
+}
 
 void LoadingScreen::show(sf::RenderWindow& window) {
     sf::Font font;
-    if (!font.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")) {
+    if (!loadLoadingFont(font)) {
         return;
     }
 
@@ -27,21 +45,15 @@ void LoadingScreen::show(sf::RenderWindow& window) {
     progress.setFillColor(sf::Color(90, 200, 255));
     progress.setPosition(loader.getPosition());
 
-    window.clear(sf::Color(8, 12, 18));
-    window.draw(title);
-    window.draw(subtitle);
-    window.draw(loader);
-    window.draw(progress);
-    window.display();
-
-    for (int i = 0; i <= 100; ++i) {
-        progress.setSize({static_cast<float>(i) * 6.f, 24.f});
+    // Short preview: 10 quick frames instead of a long artificial loading delay.
+    for (int step = 0; step <= 10; ++step) {
+        progress.setSize({static_cast<float>(step) * 60.f, 24.f});
         window.clear(sf::Color(8, 12, 18));
         window.draw(title);
         window.draw(subtitle);
         window.draw(loader);
         window.draw(progress);
         window.display();
-        sf::sleep(sf::milliseconds(18));
+        sf::sleep(sf::milliseconds(5));
     }
 }
